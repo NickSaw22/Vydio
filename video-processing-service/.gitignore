@@ -1,0 +1,29 @@
+# Dependencies
+/node_modules/
+
+# Compiled TypeScript output
+/dist/
+
+# Local environment variables and credentials
+.env
+.env.*
+!.env.example
+*-service-account.json
+*.pem
+*.key
+package-lock.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Local video files
+/raw-videos/
+/processed-videos/
+*.mp4
+*.mov
+
+# macOS
+.DS_Store
