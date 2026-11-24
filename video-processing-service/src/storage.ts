@@ -1,6 +1,7 @@
 import { Storage }from  "@google-cloud/storage";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
+import path from "path";
 
 const storage = new Storage();
 const rawVideoBucketName = "ns-vydio-raw-videos";
@@ -17,8 +18,10 @@ export const setUpDirectories = () => {
 
 
 export const convertVideo = (rawVideoName: string, processedVideoName: string) => {
-  return new Promise((resolve, reject) => {
-    ffmpeg(`${localRawVideoPath}/${rawVideoName}`)
+  const outputPath = path.join(localProcessedVideoPath, processedVideoName);
+  return fs.promises.mkdir(path.dirname(outputPath), { recursive: true }).then(() =>
+    new Promise((resolve, reject) => {
+    ffmpeg(path.join(localRawVideoPath, rawVideoName))
       .outputOptions('-vf', 'scale=-1:360') //360p`
       .on("end", () => {
         console.log("Conversion finished");
@@ -28,14 +31,16 @@ export const convertVideo = (rawVideoName: string, processedVideoName: string) =
         console.error("Error occurred while converting video:", err);
         reject(err);
       })
-      .save(`${localProcessedVideoPath}/${processedVideoName}`)
-  });
+      .save(outputPath)
+    })
+  );
 };
 
 
 export const downloadRawVideoFromGCS = async (fileName: string) => {
     try {
-        const destination = `${localRawVideoPath}/${fileName}`;
+        const destination = path.join(localRawVideoPath, fileName);
+        await fs.promises.mkdir(path.dirname(destination), { recursive: true });
         await storage.bucket(rawVideoBucketName).file(fileName).download({ destination });
         console.log(`Downloaded ${fileName} from GCS to ${destination}`);
     } catch (error) {
@@ -50,7 +55,7 @@ export const uploadProcessedVideoToGCS = async (fileName: string) => {
             destination: `${fileName}`,
         };
         const bucket = storage.bucket(processedVideoBucketName);
-        await bucket.upload(`${localProcessedVideoPath}/${fileName}`, options);
+        await bucket.upload(path.join(localProcessedVideoPath, fileName), options);
         await bucket.file(fileName).makePublic();
         console.log(`Uploaded ${fileName} to GCS bucket ${processedVideoBucketName}`);
     } catch (error) {
@@ -60,11 +65,11 @@ export const uploadProcessedVideoToGCS = async (fileName: string) => {
 }
 
 export const deleteRawLocalVideo = (fileName: string) => {
-    return deleteFile(`${localRawVideoPath}/${fileName}`);
+    return deleteFile(path.join(localRawVideoPath, fileName));
 }
 
 export const deleteProcessedLocalVideo = (fileName: string) => {
-    return deleteFile(`${localProcessedVideoPath}/${fileName}`);
+    return deleteFile(path.join(localProcessedVideoPath, fileName));
 }
 
 const ensuneDirectoryExists = (directoryPath: string) => {
@@ -97,8 +102,8 @@ export const deleteFile = (filePath: string) : Promise<void> => {
 
 const cleanUpLocalFiles = (fileNames: string[]) => {
     fileNames.forEach((fileName) => {
-        const rawVideoPath = `${localRawVideoPath}/${fileName}`;
-        const processedVideoPath = `${localProcessedVideoPath}/${fileName}`;
+        const rawVideoPath = path.join(localRawVideoPath, fileName);
+        const processedVideoPath = path.join(localProcessedVideoPath, fileName);
 
         if (fs.existsSync(rawVideoPath)) {
             fs.unlinkSync(rawVideoPath);
