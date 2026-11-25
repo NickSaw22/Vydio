@@ -1,5 +1,6 @@
 import express from "express";
 import { setUpDirectories,  downloadRawVideoFromGCS, convertVideo, uploadProcessedVideoToGCS, deleteRawLocalVideo, deleteProcessedLocalVideo } from "./storage";
+import { isVideoNew, setVideo } from "./firestore";
 
 setUpDirectories();
 const app = express();
@@ -15,18 +16,36 @@ app.post("/process-video", async (req, res) => {
     try{
         const message = Buffer.from(req.body.message.data, "base64").toString("utf-8");
         data = JSON.parse(message);
-        if(!data || !data.name){
+        if(!data || typeof data.name !== "string" || !data.name){
             throw new Error("Invalid message format: 'name' field is missing");
         }
 
         const inputFileName = data.name;
         const outputFileName = `processed-${inputFileName}`;
-        
+        const [uid] = inputFileName.split("/");
+        if (!uid || !inputFileName.includes("/")) {
+            throw new Error("Invalid video object name: expected a UID prefix");
+        }
+
+        const videoId = encodeURIComponent(inputFileName);
+        if (!(await isVideoNew(videoId))) {
+            return res.status(200).send("Video is already being processed or has been processed");
+        }
+        await setVideo(videoId, {
+            id: videoId,
+            uid,
+            status: "processing"
+        });
         await downloadRawVideoFromGCS(inputFileName)
         await convertVideo(inputFileName, outputFileName);
 
         await uploadProcessedVideoToGCS(outputFileName);
         
+        await setVideo(videoId, {
+            filename: outputFileName,
+            status: "processed"
+        });
+
         await Promise.all([
             deleteRawLocalVideo(inputFileName),
             deleteProcessedLocalVideo(outputFileName)

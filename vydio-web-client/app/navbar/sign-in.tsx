@@ -1,9 +1,7 @@
 "use client";
 
 import { signInWithGoogle, signOut } from "../firebase/firebase";
-import {Fragment} from "react";
-import styles from "./sign-in.module.css";
-import { User } from "firebase/auth";
+import type { User } from "firebase/auth";
 
 interface SignInProps {
     user: User | null;
@@ -11,20 +9,11 @@ interface SignInProps {
 
 export default function SignIn({ user }: SignInProps) {
     return (
-        <Fragment>
-            {
-                user ? 
-                (
-                    <button className={styles.signIn} onClick={signOut}>
-                        Sign Out
-                    </button>) 
-                : 
-                (
-                    <button className={styles.signIn} onClick={signInWithGoogle}>
-                        Sign In with Google
-                    </button>
-                )
-            }
-        </Fragment>
+        <button
+            className="inline-flex min-h-9 items-center justify-center rounded-md bg-blue-600 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            onClick={user ? signOut : signInWithGoogle}
+        >
+            {user ? "Sign out" : "Sign in"}
+        </button>
     )
 }

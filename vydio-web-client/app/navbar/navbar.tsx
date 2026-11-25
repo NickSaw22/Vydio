@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { onAuthStateChangedListener } from "../firebase/firebase";
 import Image from "next/image";
 import Link from "next/link";
 import SignIn from "./sign-in";
-import { useState } from "react";
-import { User } from "firebase/auth";
-import Upload from "./upload";
+import type { User } from "firebase/auth";
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
@@ -20,28 +18,20 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="flex items-center justify-between p-4 bg-gray-800 text-white">
-      <div className="text-lg font-bold">
-        <Link href="/" className="flex items-center space-x-2">
-          <Image src="/vydio-file.svg" alt="Vydio Logo" width={32} height={32} />
-          <span>Vydio</span>
+    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
+      <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
+        <Link href="/" className="inline-flex items-center gap-2.5 text-xl font-bold tracking-tight text-zinc-900 no-underline" aria-label="Vydio home">
+          <Image src="/vydio-file.svg" alt="" width={34} height={34} priority />
+          <span>vydio</span>
         </Link>
-      </div>
-      <ul className="flex space-x-4 text-sm font-medium">
-        {/* <li>
-          <a href="/" className="hover:underline">
-            Home
-          </a>
-        </li> */}
-        <li>
-          <a href="/watch" className="hover:underline">
-            Watch
-          </a>
-        </li>
-      </ul>
-      {user && <Upload />}
-      &nbsp;&nbsp;
-      <SignIn user={user} />
-    </nav>
+
+        <div className="flex items-center gap-4 sm:gap-6">
+          <Link href="/" className="text-sm font-medium text-slate-600 no-underline transition-colors hover:text-blue-700">
+            Explore
+          </Link>
+          <SignIn user={user} />
+        </div>
+      </nav>
+    </header>
   );
 }

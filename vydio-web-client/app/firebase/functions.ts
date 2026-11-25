@@ -1,6 +1,6 @@
-import {getFunctions, httpsCallable} from "firebase/functions";
+import {httpsCallable} from "firebase/functions";
+import {functions} from "./firebase";
 
-const  functions = getFunctions();
 type GenerateUploadUrlRequest = {
     fileName: string;
     contentType: string;
@@ -10,11 +10,25 @@ type GenerateUploadUrlResponse = {
     url: string;
     fileName: string;
 };
+export interface Video {
+    id?: string;
+    uid?: string;
+    filename?: string;
+    status?: "pending" | "processing" | "processed" | "failed";
+    title?: string;
+    description?: string;
+}
 
 const generateUploadUrl = httpsCallable<GenerateUploadUrlRequest, GenerateUploadUrlResponse>(
     functions,
     "generateUploadUrl"
 );
+
+type GetVideosResponse = {
+    videos: Video[];
+};
+
+const getVideosFunction = httpsCallable<void, GetVideosResponse>(functions, "getVideos");
 
 export const uploadVideo = async (file: File) => {
     try {
@@ -37,4 +51,9 @@ export const uploadVideo = async (file: File) => {
         console.error("Error occurred while uploading video:", error);
         throw error;
     }
+}
+
+export async function getVideos() {
+    const response = await getVideosFunction();
+    return response.data.videos;
 }
